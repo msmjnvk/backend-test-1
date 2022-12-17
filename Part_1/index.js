@@ -1,5 +1,5 @@
 const express = require('express');
-const fileUpload =  require('express-fileupload');
+const fileUpload = require('express-fileupload');
 const { validationResult, check } = require('express-validator');
 const fs = require('fs');
 var slugify = require('slugify');
@@ -21,7 +21,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 'use strict';
 
-app.post('/api/post/add', fileUpload({createParentPath: true}),
+Date.prototype.toUnixTime = function() { return this.getTime()/1000|0 };
+    Date.time = function() { return new Date().toUnixTime(); }
+
+app.post('/api/post/add', fileUpload({ createParentPath: true }),
     check('title')
         .exists().withMessage('title field is required').bail()
         .isLength({ min: 5, max: 50 }).withMessage('Title must have min 5 and max 50 character').bail()
@@ -36,45 +39,61 @@ app.post('/api/post/add', fileUpload({createParentPath: true}),
     ,
     async (req, res) => {
         const errors = validationResult(req);
+        const array_of_allowed_files = ['jpg'];
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
         const files = req.files;
-        if(!files.main_image){
+        if (!files.main_image) {
             return res.status(400).json({ errors: 'Main Image required' });
         }
-        if(files.main_image.size>1000000){
+        if (files.main_image.size > 1000000) {
             return res.status(400).json({ errors: 'Image size should be less than 1Mb' });
         }
-        console.log(files.main_image.name.split('.')[1]);
-        // if (files.main_image.name.split('.')[1] == 'jpg') {
-        //     return res.status(400).json({ errors: 'Image foramt should be jpg' });
-        // }
-        if(files.additional_images.length>5){
-            return res.status(400).json({ errors: 'Upload Max 5 Images' });
+        const file_extension = files.main_image.name.slice(
+            ((files.main_image.name.lastIndexOf('.') - 1) >>> 0) + 2
+        );
+        if (!array_of_allowed_files.includes(file_extension)) {
+            return res.status(400).json({ errors: 'Image foramt should be jpg' });
+        }
+        if (files.additional_images && files.additional_images.length > 5) {
+            return res.status(400).json({ errors: 'Number of additional image Max 5' });
         }
 
+        var additional_images_names = [];
 
+        for (let i=0; i < files.additional_images.length; i++) {
+            additional_images_names.push(files.additional_images[i].name);
+          }
 
-        console.log(files);
-
-        const blog = {
-            reference: '000001',
-            title: req.body.title,
-            description: req.body.description,
-            main_image: 'img21.jpg',
-            additional_images: ['img23.jpg', 'img24.jpg'],
-            date_time: '19876578746'
-        };
-        res.send(JSON.stringify(blog));
-        // req.body.description
-        // req.body.main_image
-        // req.body.additional_images
-        // req.body.date_time
+        if (!fs.existsSync('test.json')) {
+            //create new file if not exist
+            fs.closeSync(fs.openSync('test.json', 'w'));
+        }
+        fs.readFile('test.json', function (err, data) {
+            var json = JSON.parse(data);
+            referenceNumber = ('00000'+(json.length+1)).slice(-5);
+            const blog = {
+                reference: referenceNumber,
+                title: req.body.title,
+                description: req.body.description,
+                main_image: files.main_image.name,
+                additional_images: additional_images_names,
+                date_time: Date.time()
+            }
+            json.push(blog);
+            res.send(JSON.stringify(blog));
+            fs.writeFile("test.json", JSON.stringify(json), function(err){
+              if (err) throw err;
+              console.log('The "data to append" was appended to file!');
+            } 
+            );
+        })
+        
     });
 
 app.get('/api/allposts', async (req, res) => {
-    let rawdata = fs.readFileSync('blogs.json');
+    let rawdata = fs.readFileSync('test.json');
     let blogs = JSON.parse(rawdata);
     blogs.forEach(function (blog) {
         blog.title = slugify(blog.title, '_');
