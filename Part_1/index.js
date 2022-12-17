@@ -39,7 +39,7 @@ app.post('/api/post/add', fileUpload({ createParentPath: true }),
     ,
     async (req, res) => {
         const errors = validationResult(req);
-        const array_of_allowed_files = ['jpg'];
+        const array_of_allowed_files = ['jpg','JPG'];
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
@@ -59,10 +59,17 @@ app.post('/api/post/add', fileUpload({ createParentPath: true }),
         if (files.additional_images && files.additional_images.length > 5) {
             return res.status(400).json({ errors: 'Number of additional image Max 5' });
         }
-
         var additional_images_names = [];
-
         for (let i=0; i < files.additional_images.length; i++) {
+            const file_extension = files.additional_images[i].name.slice(
+                ((files.additional_images[i].name.lastIndexOf('.') - 1) >>> 0) + 2
+            );
+            if (!array_of_allowed_files.includes(file_extension)) {
+                return res.status(400).json({ errors: 'additional Image foramt should be jpg' });
+            }
+            if (files.additional_images[i].size > 1000000) {
+                return res.status(400).json({ errors: 'Additional Image size should be less than 1Mb' });
+            }
             additional_images_names.push(files.additional_images[i].name);
           }
 
@@ -73,7 +80,7 @@ app.post('/api/post/add', fileUpload({ createParentPath: true }),
         fs.readFile('test.json', function (err, data) {
             var json = JSON.parse(data);
             referenceNumber = ('00000'+(json.length+1)).slice(-5);
-            const blog = {
+            blog = {
                 reference: referenceNumber,
                 title: req.body.title,
                 description: req.body.description,
@@ -82,10 +89,10 @@ app.post('/api/post/add', fileUpload({ createParentPath: true }),
                 date_time: Date.time()
             }
             json.push(blog);
-            res.send(JSON.stringify(blog));
             fs.writeFile("test.json", JSON.stringify(json), function(err){
               if (err) throw err;
               console.log('The "data to append" was appended to file!');
+              res.send(JSON.stringify(blog));
             } 
             );
         })
