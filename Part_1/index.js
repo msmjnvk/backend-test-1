@@ -85,7 +85,7 @@ app.post('/api/post/add', fileUpload({
             return res.status(400).json({ errors: 'Main Image required' });
         }
         if (files.main_image.size > 1000000) {
-            return res.status(400).json({ errors: 'Main Image size should be less than 1Mb' });
+            return res.status(400).json({ errors: 'exceeded image size of 1MB' });
         }
         const file_extension = files.main_image.name.slice(
             ((files.main_image.name.lastIndexOf('.') - 1) >>> 0) + 2
@@ -97,6 +97,7 @@ app.post('/api/post/add', fileUpload({
             return res.status(400).json({ errors: 'Number of additional image Max 5' });
         }
         var additional_images_names = [];
+        if (files.additional_images){
         for (let i = 0; i < files.additional_images.length; i++) {
             const file_extension = files.additional_images[i].name.slice(
                 ((files.additional_images[i].name.lastIndexOf('.') - 1) >>> 0) + 2
@@ -105,7 +106,7 @@ app.post('/api/post/add', fileUpload({
                 return res.status(400).json({ errors: 'additional Image foramt should be jpg' });
             }
             if (files.additional_images[i].size > 1000000) {
-                return res.status(400).json({ errors: 'Additional Image size should be less than 1Mb' });
+                return res.status(400).json({ errors: 'exceeded image size of 1MB' });
             }
             additional_images_names.push(files.additional_images[i].name);
             sampleFile = files.additional_images[i];
@@ -115,7 +116,7 @@ app.post('/api/post/add', fileUpload({
                     return res.status(500).send(err);
                 console.log("file upload");
             });
-        }
+        }}
         sampleFile = files.main_image;
         uploadPath = __dirname + '/tmp/' + sampleFile.name;
         sampleFile.mv(uploadPath, function (err) {
@@ -143,7 +144,7 @@ app.post('/api/post/add', fileUpload({
                 description: req.body.description,
                 main_image: files.main_image.name,
                 additional_images: additional_images_names,
-                date_time: Date.time()
+                date_time: req.body.date_time
             }
             json.push(blog);
             fs.writeFile("blogs.json", JSON.stringify(json), function (err) {
@@ -166,5 +167,5 @@ app.get('/api/allposts', async (req, res) => {
 });
 
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3600;
 app.listen(port, () => console.log(`listening to ${port}...`))
