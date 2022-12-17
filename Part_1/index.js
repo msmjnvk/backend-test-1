@@ -4,20 +4,9 @@ const dotenv = require('dotenv');
 const { validationResult, check } = require('express-validator');
 const fs = require('fs');
 var slugify = require('slugify');
-const multer = require("multer");
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const upload = multer({
-    storage: multer.diskStorage({
-        destination: function (req, file, cb) {
-            cb(null, "images")
-        },
-        filename: function (req, file, cb) {
-            cb(null, file.fieldname + "-" + Date.now() + ".jpg")
-        }
-    })
-});
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization']
@@ -52,7 +41,15 @@ app.post('/api/newtoken', (req, res) => {
 });
 
 app.get('/api/getimage', authenticateToken, (req, res) => {
-    res.send(true);
+    let img = __dirname+req.body.imagePath.imagePath;
+    fs.readFile(img,function(err,content){
+        if(err){
+            return res.status(400).json({ errors: 'File not Exist' });
+        }else{
+            res.writeHead(200, {"Content-type":"image/jpg"});
+            res.end(content);
+        }
+    })
   });
 
 app.post('/api/post/add', fileUpload({ createParentPath: true }),
@@ -104,11 +101,11 @@ app.post('/api/post/add', fileUpload({ createParentPath: true }),
             additional_images_names.push(files.additional_images[i].name);
           }
 
-        if (!fs.existsSync('test.json')) {
+        if (!fs.existsSync('blogs.json')) {
             //create new file if not exist
-            fs.closeSync(fs.openSync('test.json', 'w'));
+            fs.closeSync(fs.openSync('blogs.json', 'w'));
         }
-        fs.readFile('test.json', function (err, data) {
+        fs.readFile('blogs.json', function (err, data) {
             var json = JSON.parse(data);
             referenceNumber = ('00000'+(json.length+1)).slice(-5);
             blog = {
@@ -120,7 +117,7 @@ app.post('/api/post/add', fileUpload({ createParentPath: true }),
                 date_time: Date.time()
             }
             json.push(blog);
-            fs.writeFile("test.json", JSON.stringify(json), function(err){
+            fs.writeFile("blogs.json", JSON.stringify(json), function(err){
               if (err) throw err;
               console.log('The "data to append" was appended to file!');
               res.send(JSON.stringify(blog));
@@ -131,13 +128,13 @@ app.post('/api/post/add', fileUpload({ createParentPath: true }),
     });
 
 app.get('/api/allposts', async (req, res) => {
-    let rawdata = fs.readFileSync('test.json');
+    let rawdata = fs.readFileSync('blogs.json');
     let blogs = JSON.parse(rawdata);
     blogs.forEach(function (blog) {
         blog.title = slugify(blog.title, '_');
         blog.date_time = new Date(blog.date_time * 1000).toISOString();
     });
-    res.send(blogs);
+    res.status(200).send(blogs);
 });
 
 
