@@ -1,4 +1,6 @@
 import mongoose from '../mongoose';
+import { Schema } from 'mongoose';
+import BlogPost from './Blog';
 
 const schema = new mongoose.Schema({
   first_name: String,
@@ -13,6 +15,8 @@ const schema = new mongoose.Schema({
     default: null,
   },
   password: String,
+  blogs:[{type: Schema.Types.ObjectId,
+    ref: "BlogPost"}]
 }, { timestamps: true });
 
 schema.set('toObject', { virtuals: true });
