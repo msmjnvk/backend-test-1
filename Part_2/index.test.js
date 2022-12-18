@@ -146,7 +146,7 @@ describe("## Get token from Generate token API and send to Get image by token AP
     test("GET Method return 200 OK", async () => {
         const response = await supertest(app).get("/api/getimage").send({
             imagePath: "/images/additional_image_1_test.jpg"
-        }).set({ Authorization: 'Bearer ' + token })
+        }).set({ Authorization: `Bearer ${token}` })
         expect(response.statusCode).toBe(200)
     });
 })
@@ -164,7 +164,7 @@ describe("## Get token from Generate token API and send to Get image by token AP
     test("GET Method return 403 OK", async () => {
         const response = await supertest(app).get("/api/getimage").send({
             imagePath: "/images/additional_image_1_test.jpg"
-        }).set({ Authorization: 'Bearer ' + token })
-        expect(response.statusCode).toBe(200)
+        }).set({ Authorization: `Bearer ${token}`})
+        expect(response.statusCode).toBe(403)
     });
 })
