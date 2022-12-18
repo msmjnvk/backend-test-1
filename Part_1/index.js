@@ -10,12 +10,13 @@ const compress_images = require("compress-images");
 
 
 const app = express();
+process.env.TOKEN_SECRET;
+
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization']
     const token = authHeader && authHeader.split(' ')[1]
     if (token == null) return res.sendStatus(401)
-
     jwt.verify(token, process.env.TOKEN_SECRET, (err, imagePath) => {
         console.log(err)
         if (err) return res.sendStatus(403)
@@ -25,10 +26,9 @@ function authenticateToken(req, res, next) {
 }
 
 dotenv.config();
-process.env.TOKEN_SECRET;
-INPUT_path_to_your_images = "tmp/**/*.{jpg,JPG,jpeg,JPEG}";
-OUTPUT_path = "images/";
 
+const INPUT_path_to_your_images = "tmp/**/*.{jpg,JPG,jpeg,JPEG}";
+const OUTPUT_path = "images/";
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 'use strict';
@@ -42,7 +42,7 @@ function generateAccessToken(imagePath) {
 
 app.post('/api/newtoken', (req, res) => {
     const token = generateAccessToken({ imagePath: req.body.imagePath });
-    res.json({ accessToken: token });
+    res.status(200).json({ accessToken: token });
 });
 
 app.get('/api/getimage', authenticateToken, (req, res) => {
@@ -65,7 +65,7 @@ app.post('/api/post/add', fileUpload({
     check('title')
         .exists().withMessage('title field is required').bail()
         .isLength({ min: 5, max: 50 }).withMessage('Title must have min 5 and max 50 character').bail()
-        .matches(/^[a-z0-9 ]+$/i).withMessage('title should not contain any special character').bail()
+        .matches(/^[a-z0-9 ]+$/i).withMessage('title has special characters').bail()
     ,
     check('description')
         .exists().withMessage('description field is required').bail()
@@ -73,6 +73,7 @@ app.post('/api/post/add', fileUpload({
     ,
     check('date_time')
         .exists().withMessage('date_time field is required').bail()
+        .isNumeric().withMessage('not unix time').bail()
     ,
     async (req, res) => {
         const errors = validationResult(req);
@@ -144,7 +145,7 @@ app.post('/api/post/add', fileUpload({
                 description: req.body.description,
                 main_image: files.main_image.name,
                 additional_images: additional_images_names,
-                date_time: req.body.date_time
+                date_time: Date.time()
             }
             json.push(blog);
             fs.writeFile("blogs.json", JSON.stringify(json), function (err) {
@@ -166,6 +167,9 @@ app.get('/api/allposts', async (req, res) => {
     res.status(200).send(blogs);
 });
 
+module.exports = {
+    app
+}
 
-const port = process.env.PORT || 3600;
+const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`listening to ${port}...`))
