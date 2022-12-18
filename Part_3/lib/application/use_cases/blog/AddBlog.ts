@@ -1,5 +1,4 @@
 import BlogPost from '../../../domain/entities/BlogPost';
-import User from '../../../domain/entities/User';
 import UserValidator from '../../../domain/validators/UserValidator';
 import { ServiceLocator } from '../../../infrastructure/config/service-locator';
 

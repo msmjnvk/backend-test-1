@@ -132,9 +132,10 @@ app.post('/api/post/add', fileUpload({
                 { jpg: { engine: 'mozjpeg', command: ['-quality', '70'] } },
                 { png: { engine: 'pngquant', command: ['--quality=20-50', '-o'] } },
                 { svg: { engine: 'svgo', command: '--multipass' } },
-                { gif: { engine: 'gifsicle', command: ['--colors', '64', '--use-col=web'] } }, function () {   
+                { gif: { engine: 'gifsicle', command: ['--colors', '64', '--use-col=web'] } }, function (err) {
+                    if(err)
+                        return res.status(500).send(err);
                 });
-            
         });
 
         if (!fs.existsSync('blogs.json')) {
@@ -162,7 +163,6 @@ app.post('/api/post/add', fileUpload({
                     date_time: Date.time()
                 }
             }
-            
             json.push(blog);
             fs.writeFile("blogs.json", JSON.stringify(json), function (err) {
                 if (err) throw err;

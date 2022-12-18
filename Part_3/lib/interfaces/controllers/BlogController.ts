@@ -2,9 +2,9 @@ import { Request, Response } from 'express';
 import { ValidationError } from 'joi';
 import GetBlogPost from '../../application/use_cases/blog/GetBlogPost';
 import AddBlog from '../../application/use_cases/blog/AddBlog';
-import DeleteUser from '../../application/use_cases/user/DeleteUser';
 import { ServiceLocator } from '../../infrastructure/config/service-locator';
 import UpdateBlogPost from '../../application/use_cases/blog/UpdateBlogPost';
+import DeleteBlog from '../../application/use_cases/blog/DeleteBlog';
 
 export default {
 
@@ -120,7 +120,7 @@ export default {
     // Treatment
     let blog = null;
     try {
-        blog = await DeleteUser(referanceId, serviceLocator);
+        blog = await DeleteBlog(referanceId, serviceLocator);
     } catch (err: unknown) {
       if (err instanceof Error) {
         console.log(err);

@@ -6,7 +6,6 @@ const fs = require('fs');
 var slugify = require('slugify');
 const jwt = require('jsonwebtoken');
 const compress_images = require("compress-images");
-var rimraf = require('rimraf')
 
 
 
@@ -135,7 +134,6 @@ app.post('/api/post/add', fileUpload({
                 { svg: { engine: 'svgo', command: '--multipass' } },
                 { gif: { engine: 'gifsicle', command: ['--colors', '64', '--use-col=web'] } }, function () {   
                 });
-            rimraf.sync(`${__dirname}/tmp`);
         });
 
         if (!fs.existsSync('blogs.json')) {
