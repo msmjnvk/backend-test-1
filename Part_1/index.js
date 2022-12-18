@@ -17,10 +17,12 @@ function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization']
     const token = authHeader && authHeader.split(' ')[1]
     if (token == null) return res.sendStatus(401)
-    jwt.verify(token, process.env.TOKEN_SECRET, (err, imagePath) => {
+    console.log('inside authenticate token');
+    console.log(req.body.imagePath);
+    jwt.verify(token, process.env.TOKEN_SECRET,req.body, (err, key) => {
         console.log(err)
         if (err) return res.sendStatus(403)
-        req.body.imagePath = imagePath
+        if(req.body.imagePath!=key.imagePath) return res.status(403).json({ error: 'token doesnt match with image path' })
         next()
     })
 }
@@ -36,17 +38,19 @@ app.use(express.urlencoded({ extended: true }));
 Date.prototype.toUnixTime = function () { return this.getTime() / 1000 | 0 };
 Date.time = function () { return new Date().toUnixTime(); }
 
-function generateAccessToken(imagePath) {
-    return jwt.sign(imagePath, process.env.TOKEN_SECRET, { expiresIn: '300s' });
+function generateAccessToken(payload) {
+    return jwt.sign(payload, process.env.TOKEN_SECRET, { expiresIn: '300s' });
 }
 
 app.post('/api/newtoken', (req, res) => {
-    const token = generateAccessToken({ imagePath: req.body.imagePath });
+    const token = generateAccessToken(req.body);
     res.status(200).json({ accessToken: token });
 });
 
 app.get('/api/getimage', authenticateToken, (req, res) => {
-    let img = __dirname + req.body.imagePath.imagePath;
+    let img = __dirname + req.body.imagePath;
+    console.log(req.body.imagePath);
+    console.log(img);
     fs.readFile(img, function (err, content) {
         if (err) {
             return res.status(400).json({ errors: 'File not Exist' });
@@ -138,15 +142,27 @@ app.post('/api/post/add', fileUpload({
         }
         fs.readFile('blogs.json', function (err, data) {
             var json = JSON.parse(data);
+            var blog;
             referenceNumber = ('00000' + (json.length + 1)).slice(-5);
-            const blog = {
-                reference: referenceNumber,
-                title: req.body.title,
-                description: req.body.description,
-                main_image: files.main_image.name,
-                additional_images: additional_images_names,
-                date_time: Date.time()
+            if(files.additional_images){
+                blog = {
+                    reference: referenceNumber,
+                    title: req.body.title,
+                    description: req.body.description,
+                    main_image: files.main_image.name,
+                    additional_images: additional_images_names,
+                    date_time: Date.time()
+                }
+            }else{
+                blog = {
+                    reference: referenceNumber,
+                    title: req.body.title,
+                    description: req.body.description,
+                    main_image: files.main_image.name,
+                    date_time: Date.time()
+                }
             }
+            
             json.push(blog);
             fs.writeFile("blogs.json", JSON.stringify(json), function (err) {
                 if (err) throw err;
